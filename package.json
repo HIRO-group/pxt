@@ -82,6 +82,7 @@
     "puppeteer": "13.0.1",
     "request": "2.88.0",
     "rimraf": "2.5.4",
+    "roslib": "^1.2.0",
     "rtlcss": "2.2.1",
     "sanitize-html": "1.22.0",
     "semantic-ui-less": "2.4.1",

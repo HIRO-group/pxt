@@ -21,6 +21,28 @@ import { DebuggerToolbox } from "./debuggerToolbox";
 import { ErrorList } from "./errorList";
 import { resolveExtensionUrl } from "./extensionManager";
 
+// ROSLIBJS
+var ROSLIB = require('roslib'); 
+
+var ros = new ROSLIB.Ros({
+    url: 'ws://localhost:9090'
+}); 
+
+ros.on('connection', function () {
+    console.log('Connected to websocket server from blocks.tsx yall.');
+}); 
+
+ros.on('close', function () {
+    console.log('Connection to websocket server closed.');
+});
+
+var codeTopic = new ROSLIB.Topic({
+        ros: ros,
+        name : '/makecode_xml',
+        messageType : 'std_msgs/String'
+    }); 
+
+
 export class Editor extends toolboxeditor.ToolboxEditor {
     editor: Blockly.WorkspaceSvg;
     currFile: pkg.File;
@@ -571,6 +593,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         this.editor.addChangeListener((ev: any) => {
             Blockly.Events.disableOrphans(ev);
+            
+            let msg = new ROSLIB.Message({
+                data : Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(this.editor))
+            })
+            console.log("publishing message")
+            codeTopic.publish(msg)
+
             if ((ev.type != Blockly.Events.UI && ev.type != Blockly.Events.VIEWPORT_CHANGE)
                 || this.markIncomplete) {
                 this.changeCallback();
