@@ -37,10 +37,16 @@ ros.on('close', function () {
 });
 
 var codeTopic = new ROSLIB.Topic({
-        ros: ros,
-        name : '/makecode_xml',
-        messageType : 'std_msgs/String'
-    }); 
+    ros: ros,
+    name : '/makecode_xml',
+    messageType : 'std_msgs/String'
+}); 
+
+var eventTopic = new ROSLIB.Topic({
+    ros: ros,
+    name : '/makecode_event',
+    messageType : 'makecode_ros_msgs/BlockEvent'
+});
 
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -595,11 +601,19 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             Blockly.Events.disableOrphans(ev);
             
             let msg = new ROSLIB.Message({
-                data : Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(this.editor))
+                data : Blockly.Xml.domToPrettyText(Blockly.Xml.workspaceToDom(this.editor))
             })
             console.log("publishing message")
             codeTopic.publish(msg)
 
+            if (ev.type) {
+                msg = new ROSLIB.Message({
+                    type: ev.type,
+                    blockId: ev.blockId,
+                    data : JSON.stringify(ev)
+                })
+                eventTopic.publish(msg)
+            }
             if ((ev.type != Blockly.Events.UI && ev.type != Blockly.Events.VIEWPORT_CHANGE)
                 || this.markIncomplete) {
                 this.changeCallback();
