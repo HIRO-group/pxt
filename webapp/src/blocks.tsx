@@ -25,7 +25,7 @@ import { resolveExtensionUrl } from "./extensionManager";
 var ROSLIB = require('roslib'); 
 
 var ros = new ROSLIB.Ros({
-    url: 'ws://localhost:9090'
+    url: 'ws://0.0.0.0:9090' // for Docker; change to localhost:9090 for localhost
 }); 
 
 ros.on('connection', function () {
@@ -605,22 +605,26 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             })
             console.log("publishing message")
             codeTopic.publish(msg)
-
-            if (ev.type) {
-                msg = new ROSLIB.Message({
-                    type: ev.type,
-                    blockId: ev.blockId,
-                    data : JSON.stringify(ev)
-                })
-                eventTopic.publish(msg)
-            }
+            
             if ((ev.type != Blockly.Events.UI && ev.type != Blockly.Events.VIEWPORT_CHANGE)
                 || this.markIncomplete) {
                 this.changeCallback();
                 this.markIncomplete = false;
+                // msg = new ROSLIB.Message({
+                //     type: ev.type,
+                //     blockId: ev.blockId,
+                //     data : JSON.stringify(ev)
+                // })
+                // eventTopic.publish(msg)
             }
             if (ev.type == Blockly.Events.CREATE) {
                 let blockId = ev.xml.getAttribute('type');
+                msg = new ROSLIB.Message({
+                    type: ev.type,
+                    blockId: blockId,
+                    data : JSON.stringify(ev)
+                })
+                eventTopic.publish(msg)
                 if (blockId == "variables_set") {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();

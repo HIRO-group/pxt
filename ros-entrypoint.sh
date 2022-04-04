@@ -9,4 +9,4 @@ if [ -e ~/ros_ws/devel/setup.bash ]; then
     echo "Sourcing ~/ros_ws/devel/setup.bash.."
     source ~/ros_ws/devel/setup.bash
 fi
-exec $@
+exec $@ 

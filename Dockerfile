@@ -11,28 +11,34 @@ ENV PATH="/home/ros/.local/bin:${PATH}"
 ENV PYTHONWARNINGS="ignore:a true SSLContext object"
 WORKDIR   /home/ros
 
-RUN apt-get update && apt-get -y install npm
-RUN apt-get -y install git-core
+RUN apt-get update && apt-get -y install npm git-core ros-noetic-rosbridge-server
 
 USER ros
 RUN mkdir -p ~/ros_ws/src
 # Add cloning of any ROS packages here (as root) and run catkin_make
-
-EXPOSE 9090
+# 
 
 USER root
 COPY ./ros-entrypoint.sh /bin/
 RUN ["chmod", "+x", "/bin/ros-entrypoint.sh"]
+
+RUN mkdir ~/makecode && cd ~/makecode && mkdir pxt
+WORKDIR /home/ros/makecode
+RUN git clone https://github.com/HIRO-group/pxt.git && cd pxt && npm install && npm install roslib && npm run build && \
+    npm install -g pxt
+# COPY . /home/ros/makecode/pxt
+RUN cd /home/ros/makecode/pxt && npm install && npm install roslib && npm run build && \
+    npm install -g pxt
+RUN git clone https://github.com/microsoft/pxt-common-packages.git && cd pxt-common-packages && npm install
+RUN git clone https://github.com/microsoft/pxt-microbit.git && cd pxt-microbit && npm install && npm link ../pxt && \
+    npm link ../pxt-common-packages
+
 ENTRYPOINT ["/bin/ros-entrypoint.sh"]
 
-USER ros
-RUN mkdir ~/makecode && cd ~/makecode
-RUN git clone https://github.com/HIRO-group/pxt.git && cd pxt && npm install && npm install roslib
-RUN npm run build
-RUN npm install -g @microsoft/pxt
-RUN cd ../ && git clone https://github.com/microsoft/pxt-common-packages.git && cd pxt-common-packages && npm install
-RUN cd ../ && git clone https://github.com/microsoft/pxt-microbit.git && cd pxt-microbit && npm install
-RUN npm link ../pxt
-RUN npm link ../pxt-common-packages
+EXPOSE 3232
+EXPOSE 3233
+EXPOSE 9090
 
-CMD ["/bin/bash", "pxt", "serve", "--rebundle"]
+COPY launch-rosbridge-pxt.sh launch-rosbridge-pxt.sh
+RUN chmod +x launch-rosbridge-pxt.sh
+CMD ["./launch-rosbridge-pxt.sh"]
