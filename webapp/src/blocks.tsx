@@ -45,7 +45,7 @@ var codeTopic = new ROSLIB.Topic({
 var eventTopic = new ROSLIB.Topic({
     ros: ros,
     name : '/makecode_event',
-    messageType : 'makecode_ros_msgs/BlockEvent'
+    messageType : 'robo_copilot/BlockEvent'
 });
 
 
@@ -606,25 +606,20 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             console.log("publishing message")
             codeTopic.publish(msg)
             
+            msg = new ROSLIB.Message({
+                type: ev.type,
+                // blockId: ev.xml.getAttribute('id'),
+                data : JSON.stringify(ev)
+            })
+            eventTopic.publish(msg)
+
             if ((ev.type != Blockly.Events.UI && ev.type != Blockly.Events.VIEWPORT_CHANGE)
                 || this.markIncomplete) {
                 this.changeCallback();
                 this.markIncomplete = false;
-                // msg = new ROSLIB.Message({
-                //     type: ev.type,
-                //     blockId: ev.blockId,
-                //     data : JSON.stringify(ev)
-                // })
-                // eventTopic.publish(msg)
             }
             if (ev.type == Blockly.Events.CREATE) {
                 let blockId = ev.xml.getAttribute('type');
-                msg = new ROSLIB.Message({
-                    type: ev.type,
-                    blockId: blockId,
-                    data : JSON.stringify(ev)
-                })
-                eventTopic.publish(msg)
                 if (blockId == "variables_set") {
                     // Need to bump suffix in flyout
                     this.clearFlyoutCaches();
